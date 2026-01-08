@@ -198,9 +198,11 @@
             </div>
         </div>
     </footer>
-    <script type="module"> 
+
+    <script type="module">
+        // Import Data from external source
         import { statesData } from 'https://sonsinos.github.io/map-quizlet/states_data.js';
-        
+
         // Game State Variables
         let remainingStates = [];
         let currentTarget = null;
@@ -208,6 +210,7 @@
         let scoreWrong = 0;
         let gameActive = false;
         let stateStatuses = {}; // Stores 'correct' or 'wrong' for uncovered states
+        let feedbackTimeout;
 
         // DOM Elements
         const mapEl = document.getElementById('us-map');
@@ -468,8 +471,9 @@
             // Prevent multi-clicks during timeout
             gameActive = false; 
 
-            // Hide previous feedback
+            // Hide previous feedback immediately
             feedbackContainer.classList.add('hidden');
+            if (feedbackTimeout) clearTimeout(feedbackTimeout);
 
             if (userGuess === correctName) {
                 // Correct
@@ -530,6 +534,10 @@
 
         function showFeedback(isCorrect, name) {
             feedbackContainer.classList.remove('hidden');
+            
+            // Clear any existing timeout
+            if (feedbackTimeout) clearTimeout(feedbackTimeout);
+
             if (isCorrect) {
                 feedbackContainer.classList.remove('border-red-200', 'bg-red-50');
                 feedbackContainer.classList.add('border-green-200', 'bg-green-50');
@@ -543,6 +551,11 @@
                 feedbackTitle.className = "text-lg font-bold text-red-700";
                 feedbackMsg.textContent = `That was ${name}.`;
             }
+
+            // Auto-hide after 3 seconds
+            feedbackTimeout = setTimeout(() => {
+                feedbackContainer.classList.add('hidden');
+            }, 3000);
         }
 
         function endGame() {
@@ -644,6 +657,11 @@
                 closeAutocomplete();
             }
         });
+
+        // Make functions globally available for HTML onclick handlers
+        window.resetGame = resetGame;
+        window.zoomMap = zoomMap;
+        window.resetZoom = resetZoom;
 
         // Initialize on load
         initMap();

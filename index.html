@@ -74,7 +74,7 @@
         /* Label styles for map */
         .state-label {
             fill: white;
-            font-size: 14px; /* Slightly larger base size for zoom */
+            font-size: 14px;
             font-weight: bold;
             text-anchor: middle;
             dominant-baseline: central;
@@ -95,53 +95,70 @@
         .zoom-btn:active {
             @apply bg-slate-200 transform scale-95;
         }
+
+        /* History Toggle Chevron */
+        .chevron {
+            transition: transform 0.2s ease;
+        }
+        .expanded .chevron {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 h-screen flex flex-col overflow-hidden select-none">
 
     <!-- Header / Scoreboard -->
-    <header class="bg-white shadow-sm p-3 z-10 shrink-0">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 md:gap-4">
-            <h1 class="text-xl md:text-2xl font-bold text-slate-700">🇺🇸 Map Quiz</h1>
+    <header class="bg-white shadow-sm z-40 relative">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-3 py-2 md:py-3 relative z-50 bg-white">
+            <h1 class="text-lg md:text-2xl font-bold text-slate-700">🇺🇸 Quiz</h1>
             
-            <div class="flex gap-4 md:gap-6 text-sm md:text-base font-medium">
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] md:text-xs text-slate-400 uppercase tracking-wider">Correct</span>
-                    <span id="score-correct" class="text-green-600 text-lg md:text-xl">0</span>
+            <!-- Scoreboard / Toggle Button -->
+            <button id="score-toggle" onclick="toggleHistory()" class="flex items-center gap-2 md:gap-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 md:px-4 md:py-2 transition-colors group">
+                <div class="flex gap-3 md:gap-6 text-xs md:text-sm font-medium">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider">Correct</span>
+                        <span id="score-correct" class="text-green-600 font-bold text-base md:text-lg">0</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider">Faulty</span>
+                        <span id="score-wrong" class="text-red-600 font-bold text-base md:text-lg">0</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] text-slate-400 uppercase tracking-wider">To Go</span>
+                        <span id="score-left" class="text-blue-600 font-bold text-base md:text-lg">50</span>
+                    </div>
                 </div>
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] md:text-xs text-slate-400 uppercase tracking-wider">Faulty</span>
-                    <span id="score-wrong" class="text-red-600 text-lg md:text-xl">0</span>
-                </div>
-                <div class="flex flex-col items-center">
-                    <span class="text-[10px] md:text-xs text-slate-400 uppercase tracking-wider">To Go</span>
-                    <span id="score-left" class="text-blue-600 text-lg md:text-xl">50</span>
-                </div>
-            </div>
+                <!-- Chevron Icon -->
+                <svg class="chevron w-4 h-4 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
             
             <button onclick="resetGame()" class="text-xs md:text-sm text-slate-500 hover:text-slate-800 underline">Restart</button>
+        </div>
+
+        <!-- History Dropdown (Absolute Panel) -->
+        <div id="history-panel" class="hidden absolute top-full left-0 w-full bg-slate-50/95 backdrop-blur-sm border-b shadow-lg z-40 max-h-[60vh] flex flex-col">
+            <div class="p-2 border-b border-slate-200 font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
+                Match History
+            </div>
+            <div id="list-completed" class="overflow-y-auto p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
+                <!-- Completed items populated here -->
+                <div class="text-center text-slate-400 italic text-sm py-4 col-span-full" id="history-placeholder">No states guessed yet</div>
+            </div>
         </div>
     </header>
 
     <!-- Main Game Area -->
-    <main class="flex-grow flex flex-col lg:flex-row gap-2 lg:gap-4 p-2 lg:p-4 w-full max-w-7xl mx-auto overflow-hidden">
+    <main class="flex-grow flex flex-col lg:flex-row gap-2 lg:gap-4 p-2 lg:p-4 w-full max-w-7xl mx-auto overflow-hidden relative z-0">
         
-        <!-- Sidebar List (Left on Desktop, Bottom on Mobile) -->
+        <!-- Sidebar List (Left on Desktop, Bottom on Mobile) - ONLY REMAINING STATES -->
         <aside class="order-2 lg:order-1 w-full lg:w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-48 lg:h-full shrink-0 overflow-hidden">
-            <!-- Active List Section -->
             <div class="p-2 bg-slate-50 border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
                 Select State
             </div>
             <div id="list-remaining" class="state-list overflow-y-auto flex-1 p-1 space-y-1 min-h-0">
                 <!-- Remaining items -->
-            </div>
-            
-            <!-- History List Section -->
-            <div class="p-2 bg-slate-50 border-t border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
-                History
-            </div>
-            <div id="list-completed" class="state-list overflow-y-auto flex-1 p-1 space-y-1 bg-slate-50/50 min-h-0">
-                <!-- Completed items -->
             </div>
         </aside>
 
@@ -174,7 +191,7 @@
     </main>
 
     <!-- Controls -->
-    <footer class="bg-white border-t p-3 pb-6 shrink-0 z-10">
+    <footer class="bg-white border-t p-3 pb-6 shrink-0 z-50">
         <div class="max-w-2xl mx-auto w-full">
             <div id="input-area" class="flex gap-2">
                 <div class="relative flex-grow">
@@ -230,6 +247,9 @@
         const listRemaining = document.getElementById('list-remaining');
         const listCompleted = document.getElementById('list-completed');
         const autocompleteList = document.getElementById('autocomplete-list');
+        const historyPanel = document.getElementById('history-panel');
+        const scoreToggle = document.getElementById('score-toggle');
+        const historyPlaceholder = document.getElementById('history-placeholder');
 
         // Zoom/Pan State
         let currentScale = 1;
@@ -248,6 +268,12 @@
                 path.setAttribute("data-name", state.name);
                 mapGroup.appendChild(path);
             });
+        }
+
+        // --- History Toggle Logic ---
+        function toggleHistory() {
+            historyPanel.classList.toggle('hidden');
+            scoreToggle.classList.toggle('expanded');
         }
 
         // --- Zoom & Pan Logic ---
@@ -320,6 +346,9 @@
         function initList() {
             listRemaining.innerHTML = '';
             listCompleted.innerHTML = '';
+            // Restore placeholder
+            listCompleted.appendChild(historyPlaceholder);
+            historyPlaceholder.classList.remove('hidden');
             
             // Sort copy of states alphabetically
             const sortedStates = [...statesData].sort((a, b) => a.name.localeCompare(b.name));
@@ -336,38 +365,40 @@
             });
         }
 
-        // Move a state from Remaining to Completed list
+        // Move a state from Remaining to Completed list (in Header)
         function moveStateToCompleted(state, isCorrect) {
+            // Hide placeholder if it's the first item
+            if (!historyPlaceholder.classList.contains('hidden')) {
+                historyPlaceholder.classList.add('hidden');
+            }
+
             const btn = document.getElementById(`btn-${state.id}`);
             if (btn) {
                 btn.remove();
             }
 
-            // Create new button for completed list
-            const completedBtn = document.createElement('button');
-            completedBtn.textContent = state.name;
-            completedBtn.disabled = true;
+            // Create new item for history list
+            const completedItem = document.createElement('div');
             
-            // Base classes
-            let classes = "w-full text-left px-4 py-2 border-b border-slate-50 last:border-0 font-bold text-sm cursor-default flex justify-between items-center";
+            let classes = "px-3 py-2 rounded border text-sm font-bold flex justify-between items-center";
             
             if (isCorrect) {
-                classes += " bg-green-50 text-green-700";
-                completedBtn.innerHTML = `${state.name} <span class="text-xs uppercase">✓</span>`;
+                classes += " bg-green-50 border-green-200 text-green-700";
+                completedItem.innerHTML = `<span>${state.name}</span> <span class="text-xs uppercase">✓</span>`;
             } else {
-                classes += " bg-red-50 text-red-700";
-                completedBtn.innerHTML = `${state.name} <span class="text-xs uppercase">✗</span>`;
+                classes += " bg-red-50 border-red-200 text-red-700";
+                completedItem.innerHTML = `<span>${state.name}</span> <span class="text-xs uppercase">✗</span>`;
             }
-            completedBtn.className = classes;
+            completedItem.className = classes;
 
-            // Insert alphabetically into completed list
-            const existingItems = Array.from(listCompleted.children);
+            // Insert alphabetically into completed list (excluding placeholder)
+            const existingItems = Array.from(listCompleted.children).filter(el => el.id !== 'history-placeholder');
             const nextItem = existingItems.find(item => item.textContent.trim().split(' ')[0].localeCompare(state.name) > 0);
             
             if (nextItem) {
-                listCompleted.insertBefore(completedBtn, nextItem);
+                listCompleted.insertBefore(completedItem, nextItem);
             } else {
-                listCompleted.appendChild(completedBtn);
+                listCompleted.appendChild(completedItem);
             }
         }
 
@@ -385,6 +416,8 @@
             inputArea.classList.remove('hidden');
             gameOverArea.classList.add('hidden');
             feedbackContainer.classList.add('hidden');
+            historyPanel.classList.add('hidden');
+            scoreToggle.classList.remove('expanded');
             inputEl.value = '';
             inputEl.focus();
 
@@ -662,6 +695,7 @@
         window.resetGame = resetGame;
         window.zoomMap = zoomMap;
         window.resetZoom = resetZoom;
+        window.toggleHistory = toggleHistory;
 
         // Initialize on load
         initMap();

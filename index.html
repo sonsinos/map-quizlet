@@ -260,7 +260,8 @@
         let currentScale = 1;
         let currentTranslate = { x: 0, y: 0 };
         let isDragging = false;
-        let startPos = { x: 0, y: 0 };
+        let lastPanX = 0;
+        let lastPanY = 0;
         
         // Pinch Zoom State
         let initialPinchDistance = null;
@@ -288,7 +289,8 @@
         // --- Zoom & Pan Logic ---
 
         function updateTransform() {
-            mapGroup.style.transform = `translate(${currentTranslate.x}px, ${currentTranslate.y}px) scale(${currentScale})`;
+            // Using attribute transform which is robust across browsers for SVG
+            mapGroup.setAttribute('transform', `translate(${currentTranslate.x} ${currentTranslate.y}) scale(${currentScale})`);
         }
 
         function zoomMap(factor) {
@@ -306,25 +308,72 @@
             updateTransform();
         }
 
+        // Mobile Auto-Zoom Logic
+        function autoZoomToState(state) {
+            // Only trigger on mobile (width < 768px)
+            if (window.innerWidth >= 768) {
+                resetZoom();
+                return;
+            }
+
+            const el = document.getElementById(state.id);
+            if (!el) return;
+
+            const bbox = el.getBBox();
+            const cx = bbox.x + bbox.width / 2;
+            const cy = bbox.y + bbox.height / 2;
+            
+            // Determine scale based on state size
+            let targetScale = 2.5; 
+            if (bbox.width > 200 || bbox.height > 200) targetScale = 1.5; // Large states
+            else if (bbox.width < 60 || bbox.height < 60) targetScale = 4.0; // Small states
+            
+            // Calculate Translation to Center the state in SVG Coordinates
+            // The SVG viewBox is 960x600. Center is (480, 300).
+            // We want (cx, cy) * scale + translate = (480, 300)
+            
+            const tx = 480 - (cx * targetScale);
+            const ty = 300 - (cy * targetScale);
+            
+            currentScale = targetScale;
+            currentTranslate = { x: tx, y: ty };
+            updateTransform();
+        }
+
+        // Helper: Convert Screen Pixels to SVG Units
+        function getSvgToScreenRatio() {
+            return 960 / mapContainer.clientWidth;
+        }
+
         // Mouse Pan Events
         mapContainer.addEventListener('mousedown', (e) => {
             isDragging = true;
-            mapGroup.classList.remove('duration-200'); // Disable smoothing for direct interaction
-            startPos = { x: e.clientX - currentTranslate.x, y: e.clientY - currentTranslate.y };
+            mapGroup.classList.remove('duration-200'); 
+            lastPanX = e.clientX;
+            lastPanY = e.clientY;
             mapContainer.style.cursor = 'grabbing';
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             e.preventDefault();
-            currentTranslate.x = e.clientX - startPos.x;
-            currentTranslate.y = e.clientY - startPos.y;
+            
+            const deltaX = e.clientX - lastPanX;
+            const deltaY = e.clientY - lastPanY;
+            lastPanX = e.clientX;
+            lastPanY = e.clientY;
+
+            // Convert screen movement to SVG unit movement
+            const ratio = getSvgToScreenRatio();
+            currentTranslate.x += deltaX * ratio;
+            currentTranslate.y += deltaY * ratio;
+            
             updateTransform();
         });
 
         window.addEventListener('mouseup', () => {
             isDragging = false;
-            mapGroup.classList.add('duration-200'); // Re-enable smoothing
+            mapGroup.classList.add('duration-200');
             mapContainer.style.cursor = 'grab';
         });
 
@@ -341,14 +390,15 @@
             if (e.touches.length === 1) {
                 // Single touch: Pan
                 isDragging = true;
-                initialPinchDistance = null; // Reset pinch
-                mapGroup.classList.remove('duration-200'); // Disable smoothing
+                initialPinchDistance = null;
+                mapGroup.classList.remove('duration-200'); 
                 const touch = e.touches[0];
-                startPos = { x: touch.clientX - currentTranslate.x, y: touch.clientY - currentTranslate.y };
+                lastPanX = touch.clientX;
+                lastPanY = touch.clientY;
             } else if (e.touches.length === 2) {
                 // Two touches: Pinch
-                isDragging = false; // Stop panning
-                mapGroup.classList.remove('duration-200'); // Disable smoothing
+                isDragging = false; 
+                mapGroup.classList.remove('duration-200'); 
                 initialPinchDistance = getPinchDistance(e.touches);
                 initialScale = currentScale;
             }
@@ -359,19 +409,25 @@
                 // Handle Pan
                 if (e.cancelable) e.preventDefault(); 
                 const touch = e.touches[0];
-                currentTranslate.x = touch.clientX - startPos.x;
-                currentTranslate.y = touch.clientY - startPos.y;
+                const deltaX = touch.clientX - lastPanX;
+                const deltaY = touch.clientY - lastPanY;
+                lastPanX = touch.clientX;
+                lastPanY = touch.clientY;
+
+                const ratio = getSvgToScreenRatio();
+                currentTranslate.x += deltaX * ratio;
+                currentTranslate.y += deltaY * ratio;
                 updateTransform();
+
             } else if (e.touches.length === 2 && initialPinchDistance) {
                 // Handle Pinch
                 if (e.cancelable) e.preventDefault();
                 const currentDistance = getPinchDistance(e.touches);
                 const zoomFactor = currentDistance / initialPinchDistance;
                 
-                // Calculate new scale based on initial pinch scale
                 let newScale = initialScale * zoomFactor;
                 
-                // Clamp scale between 0.5x and 8x
+                // Clamp scale
                 if (newScale < 0.5) newScale = 0.5;
                 if (newScale > 8) newScale = 8;
                 
@@ -381,14 +437,11 @@
         }, { passive: false });
 
         window.addEventListener('touchend', (e) => {
-            // If fingers lifted, re-enable smoothing
             if (e.touches.length === 0) {
                 isDragging = false;
                 initialPinchDistance = null;
                 mapGroup.classList.add('duration-200');
             } else if (e.touches.length === 1) {
-                // If one finger remains, switch back to pan setup for that finger
-                // (Optional: usually safer to just stop dragging to prevent jumping)
                 isDragging = false; 
                 initialPinchDistance = null;
             }
@@ -516,6 +569,9 @@
             // Highlight map
             highlightState(currentTarget.id);
             updateScoreboard();
+            
+            // Auto Zoom on Mobile
+            autoZoomToState(currentTarget);
             
             inputEl.value = '';
             inputEl.focus();

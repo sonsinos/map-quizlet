@@ -109,7 +109,7 @@
 
     <!-- Header / Scoreboard -->
     <header class="bg-white shadow-sm z-40 relative">
-        <div class="max-w-6xl mx-auto flex justify-between items-center px-2 pt-7 pb-2 md:py-3 relative z-50 bg-white">
+        <div class="max-w-6xl mx-auto flex justify-between items-center px-2 pt-4 pb-2 md:py-3 relative z-50 bg-white">
             <h1 class="text-lg md:text-2xl font-bold text-slate-700 shrink-0 mr-1">
                 🇺🇸<span class="hidden sm:inline"> Quiz</span>
             </h1>
@@ -261,6 +261,10 @@
         let currentTranslate = { x: 0, y: 0 };
         let isDragging = false;
         let startPos = { x: 0, y: 0 };
+        
+        // Pinch Zoom State
+        let initialPinchDistance = null;
+        let initialScale = null;
 
         // Initialize Map
         function initMap() {
@@ -305,6 +309,7 @@
         // Mouse Pan Events
         mapContainer.addEventListener('mousedown', (e) => {
             isDragging = true;
+            mapGroup.classList.remove('duration-200'); // Disable smoothing for direct interaction
             startPos = { x: e.clientX - currentTranslate.x, y: e.clientY - currentTranslate.y };
             mapContainer.style.cursor = 'grabbing';
         });
@@ -319,29 +324,74 @@
 
         window.addEventListener('mouseup', () => {
             isDragging = false;
+            mapGroup.classList.add('duration-200'); // Re-enable smoothing
             mapContainer.style.cursor = 'grab';
         });
 
-        // Touch Pan Events (for Mobile)
+        // Helper to get distance between two touch points
+        function getPinchDistance(touches) {
+            return Math.hypot(
+                touches[0].clientX - touches[1].clientX,
+                touches[0].clientY - touches[1].clientY
+            );
+        }
+
+        // Touch Events (Pan & Pinch)
         mapContainer.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
+                // Single touch: Pan
                 isDragging = true;
+                initialPinchDistance = null; // Reset pinch
+                mapGroup.classList.remove('duration-200'); // Disable smoothing
                 const touch = e.touches[0];
                 startPos = { x: touch.clientX - currentTranslate.x, y: touch.clientY - currentTranslate.y };
+            } else if (e.touches.length === 2) {
+                // Two touches: Pinch
+                isDragging = false; // Stop panning
+                mapGroup.classList.remove('duration-200'); // Disable smoothing
+                initialPinchDistance = getPinchDistance(e.touches);
+                initialScale = currentScale;
             }
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            if (e.cancelable) e.preventDefault(); 
-            const touch = e.touches[0];
-            currentTranslate.x = touch.clientX - startPos.x;
-            currentTranslate.y = touch.clientY - startPos.y;
-            updateTransform();
+            if (e.touches.length === 1 && isDragging) {
+                // Handle Pan
+                if (e.cancelable) e.preventDefault(); 
+                const touch = e.touches[0];
+                currentTranslate.x = touch.clientX - startPos.x;
+                currentTranslate.y = touch.clientY - startPos.y;
+                updateTransform();
+            } else if (e.touches.length === 2 && initialPinchDistance) {
+                // Handle Pinch
+                if (e.cancelable) e.preventDefault();
+                const currentDistance = getPinchDistance(e.touches);
+                const zoomFactor = currentDistance / initialPinchDistance;
+                
+                // Calculate new scale based on initial pinch scale
+                let newScale = initialScale * zoomFactor;
+                
+                // Clamp scale between 0.5x and 8x
+                if (newScale < 0.5) newScale = 0.5;
+                if (newScale > 8) newScale = 8;
+                
+                currentScale = newScale;
+                updateTransform();
+            }
         }, { passive: false });
 
-        window.addEventListener('touchend', () => {
-            isDragging = false;
+        window.addEventListener('touchend', (e) => {
+            // If fingers lifted, re-enable smoothing
+            if (e.touches.length === 0) {
+                isDragging = false;
+                initialPinchDistance = null;
+                mapGroup.classList.add('duration-200');
+            } else if (e.touches.length === 1) {
+                // If one finger remains, switch back to pan setup for that finger
+                // (Optional: usually safer to just stop dragging to prevent jumping)
+                isDragging = false; 
+                initialPinchDistance = null;
+            }
         });
 
 

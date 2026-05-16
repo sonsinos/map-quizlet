@@ -45,14 +45,29 @@
         </div>
 
         <!-- History Dropdown (Absolute Panel) -->
-        <div id="history-panel" class="hidden absolute top-full left-0 w-full bg-slate-50/95 backdrop-blur-sm border-b shadow-lg z-40 max-h-[60vh] flex flex-col">
-            <div class="p-2 border-b border-slate-200 font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
-                Match History
+        <div id="history-panel" class="hidden absolute top-full left-0 w-full bg-slate-50/95 backdrop-blur-sm border-b shadow-lg z-40 max-h-[70vh] flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-hidden">
+            
+            <!-- Match History Section -->
+            <div class="flex-1 flex flex-col min-h-0 h-1/2 md:h-auto p-2">
+                <div class="pb-2 border-b border-slate-200 font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
+                    Match History
+                </div>
+                <div id="list-completed" class="overflow-y-auto flex-1 p-1 grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
+                    <!-- Completed items populated here -->
+                    <div class="text-center text-slate-400 italic text-xs py-4 col-span-full" id="history-placeholder">No states guessed yet</div>
+                </div>
             </div>
-            <div id="list-completed" class="overflow-y-auto p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
-                <!-- Completed items populated here -->
-                <div class="text-center text-slate-400 italic text-sm py-4 col-span-full" id="history-placeholder">No states guessed yet</div>
+
+            <!-- States to Learn Section -->
+            <div class="flex-1 flex flex-col min-h-0 h-1/2 md:h-auto p-2 bg-red-50/10">
+                <div class="pb-2 border-b border-slate-200 font-bold text-xs uppercase text-red-600 tracking-wider text-center shrink-0">
+                    States to Learn
+                </div>
+                <div id="list-incorrect" class="overflow-y-auto flex-grow p-1 grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
+                    <div class="text-center text-slate-400 italic text-xs py-4 col-span-full" id="incorrect-placeholder">No states to review yet</div>
+                </div>
             </div>
+
         </div>
     </header>
 
@@ -60,24 +75,12 @@
     <main class="flex-grow flex flex-col lg:flex-row gap-2 lg:gap-4 p-2 lg:p-4 w-full max-w-7xl mx-auto overflow-hidden relative z-0">
         
         <!-- Sidebar List (Left on Desktop, Bottom on Mobile) - ONLY REMAINING STATES -->
-        <aside class="order-2 lg:order-1 w-full lg:w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-64 lg:h-full shrink-0 overflow-hidden">
-            <!-- Available States Section -->
-            <div class="flex flex-col flex-grow min-h-0 border-b border-slate-200">
-                <div class="p-2 bg-slate-50 border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
-                    Select State
-                </div>
-                <div id="list-remaining" class="state-list overflow-y-auto flex-1 p-1 space-y-1 min-h-0">
-                    <!-- Remaining items -->
-                </div>
+        <aside class="order-2 lg:order-1 w-full lg:w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-48 lg:h-full shrink-0 overflow-hidden">
+            <div class="p-2 bg-slate-50 border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
+                Select State
             </div>
-            <!-- States to Learn Section -->
-            <div class="flex flex-col h-28 lg:h-48 shrink-0 min-h-0">
-                <div class="p-2 bg-red-50 border-b border-red-100 font-bold text-xs uppercase text-red-600 tracking-wider text-center shrink-0">
-                    States to Learn
-                </div>
-                <div id="list-incorrect" class="state-list overflow-y-auto flex-grow p-1 space-y-1 min-h-0">
-                    <div class="text-center text-slate-400 italic text-xs py-2" id="incorrect-placeholder">No states to review yet</div>
-                </div>
+            <div id="list-remaining" class="state-list overflow-y-auto flex-1 p-1 space-y-1 min-h-0">
+                <!-- Remaining items -->
             </div>
         </aside>
 
@@ -618,10 +621,10 @@
 
             const item = document.createElement('div');
             item.id = `learn-${state.id}`;
-            item.className = "w-full text-left px-3 py-1.5 hover:bg-red-50/30 transition-colors flex justify-between items-center border-b border-slate-50 last:border-0 text-slate-700 font-medium text-xs";
+            item.className = "px-3 py-2 rounded border border-slate-200 bg-white text-slate-700 text-xs font-bold flex justify-between items-center shadow-sm hover:border-red-200 transition-colors";
             item.innerHTML = `
                 <span>${state.name}</span>
-                <span class="px-1 py-0.2 text-[9px] font-bold bg-slate-100 text-slate-500 rounded border border-slate-200 uppercase tracking-wider">${state.id}</span>`;
+                <span class="px-1.5 py-0.5 text-[9px] font-bold bg-slate-100 text-slate-500 rounded border border-slate-200 uppercase tracking-wider">${state.id}</span>`;
 
             // Insert alphabetically into list-incorrect
             const container = document.getElementById('list-incorrect');

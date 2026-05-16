@@ -398,8 +398,10 @@
             sortedStates.forEach(state => {
                 const btn = document.createElement('button');
                 btn.id = `btn-${state.id}`;
-                btn.textContent = state.name;
-                btn.className = "w-full text-left px-4 py-2 hover:bg-slate-100 transition-colors border-b border-slate-100 last:border-0 text-slate-700 font-medium text-sm";
+                btn.className = "w-full px-4 py-2 hover:bg-slate-100 transition-colors border-b border-slate-100 last:border-0 text-slate-700 font-medium text-sm flex justify-between items-center";
+                btn.innerHTML = `
+                    <span>${state.name}</span>
+                    <span class="px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 rounded border border-slate-200 uppercase tracking-wider">${state.id}</span>`;
                 btn.onclick = () => {
                     if (gameActive) checkAnswer(state.name);
                 };
@@ -426,10 +428,20 @@
             
             if (isCorrect) {
                 classes += " bg-green-50 border-green-200 text-green-700";
-                completedItem.innerHTML = `<span>${state.name}</span> <span class="text-xs uppercase">✓</span>`;
+                completedItem.innerHTML = `
+                    <span>${state.name}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded border border-green-200 uppercase tracking-wider">${state.id}</span>
+                        <span class="text-xs uppercase">✓</span>
+                    </div>`;
             } else {
                 classes += " bg-red-50 border-red-200 text-red-700";
-                completedItem.innerHTML = `<span>${state.name}</span> <span class="text-xs uppercase">✗</span>`;
+                completedItem.innerHTML = `
+                    <span>${state.name}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded border border-red-200 uppercase tracking-wider">${state.id}</span>
+                        <span class="text-xs uppercase">✗</span>
+                    </div>`;
             }
             completedItem.className = classes;
 

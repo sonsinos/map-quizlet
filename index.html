@@ -155,6 +155,7 @@
         let feedbackTimeout;
         let lastSelectionWasSearchbox = true;
         let incorrectStates = new Set();
+        let isReviewMode = false;
 
         // DOM Elements
         const mapEl = document.getElementById('us-map');
@@ -461,6 +462,7 @@
 
         // Initialize Game
         function startGame(onlyReview = false) {
+            isReviewMode = onlyReview;
             // Reset variables
             if (onlyReview) {
                 remainingStates = statesData.filter(state => incorrectStates.has(state.id));
@@ -598,8 +600,8 @@
                 // Move state to Completed list
                 moveStateToCompleted(currentTarget, true);
 
-                // Remove from review list if they get it correct
-                if (incorrectStates.has(currentTarget.id)) {
+                // Remove from review list if they get it correct (ONLY in review mode)
+                if (isReviewMode && incorrectStates.has(currentTarget.id)) {
                     incorrectStates.delete(currentTarget.id);
                     const card = document.getElementById(`learn-${currentTarget.id}`);
                     if (card) card.remove();

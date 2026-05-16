@@ -133,7 +133,10 @@
             <div id="game-over-area" class="hidden text-center">
                 <h2 class="text-2xl font-bold mb-2">Quiz Complete!</h2>
                 <p id="final-score" class="mb-4 text-slate-600"></p>
-                <button onclick="resetGame()" class="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-700 transition-colors">Play Again</button>
+                <div class="flex flex-col sm:flex-row gap-2 justify-center items-center">
+                    <button onclick="resetGame()" class="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-700 transition-colors font-semibold">Play Again (All States)</button>
+                    <button id="btn-review-game" onclick="startReviewGame()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-50 transition-colors font-semibold hidden">Review Wrong States</button>
+                </div>
             </div>
         </div>
     </footer>
@@ -393,7 +396,7 @@
             historyPlaceholder.classList.remove('hidden');
             
             // Sort copy of states alphabetically
-            const sortedStates = [...statesData].sort((a, b) => a.name.localeCompare(b.name));
+            const sortedStates = [...remainingStates].sort((a, b) => a.name.localeCompare(b.name));
             
             sortedStates.forEach(state => {
                 const btn = document.createElement('button');
@@ -457,21 +460,25 @@
         }
 
         // Initialize Game
-        function resetGame() {
+        function startGame(onlyReview = false) {
             // Reset variables
-            remainingStates = [...statesData]; 
+            if (onlyReview) {
+                remainingStates = statesData.filter(state => incorrectStates.has(state.id));
+            } else {
+                remainingStates = [...statesData]; 
+                // Re-init incorrect states
+                incorrectStates.clear();
+                const learnContainer = document.getElementById('list-incorrect');
+                if (learnContainer) {
+                    learnContainer.innerHTML = '<div class="text-center text-slate-400 italic text-xs py-2" id="incorrect-placeholder">No states to review yet</div>';
+                }
+            }
+            
             scoreCorrect = 0;
             scoreWrong = 0;
             gameActive = true;
             stateStatuses = {}; 
             lastSelectionWasSearchbox = true;
-            
-            // Re-init incorrect states
-            incorrectStates.clear();
-            const learnContainer = document.getElementById('list-incorrect');
-            if (learnContainer) {
-                learnContainer.innerHTML = '<div class="text-center text-slate-400 italic text-xs py-2" id="incorrect-placeholder">No states to review yet</div>';
-            }
             
             // Reset UI
             updateScoreboard();
@@ -591,6 +598,17 @@
                 // Move state to Completed list
                 moveStateToCompleted(currentTarget, true);
 
+                // Remove from review list if they get it correct
+                if (incorrectStates.has(currentTarget.id)) {
+                    incorrectStates.delete(currentTarget.id);
+                    const card = document.getElementById(`learn-${currentTarget.id}`);
+                    if (card) card.remove();
+                    if (incorrectStates.size === 0) {
+                        const placeholder = document.getElementById('incorrect-placeholder');
+                        if (placeholder) placeholder.classList.remove('hidden');
+                    }
+                }
+
                 showFeedback(true, currentTarget.name);
                 setTimeout(nextRound, 1000); 
             } else {
@@ -700,6 +718,17 @@
             gameOverArea.classList.remove('hidden');
             finalScoreEl.textContent = `You got ${scoreCorrect} correct and ${scoreWrong} wrong.`;
             feedbackContainer.classList.add('hidden');
+
+            // Toggle review game button
+            const reviewBtn = document.getElementById('btn-review-game');
+            if (reviewBtn) {
+                if (incorrectStates.size > 0) {
+                    reviewBtn.classList.remove('hidden');
+                    reviewBtn.textContent = `Review States to Learn (${incorrectStates.size})`;
+                } else {
+                    reviewBtn.classList.add('hidden');
+                }
+            }
         }
 
         // Event Listeners
@@ -800,7 +829,8 @@
         });
 
         // Make functions globally available for HTML onclick handlers
-        window.resetGame = resetGame;
+        window.resetGame = () => startGame(false);
+        window.startReviewGame = () => startGame(true);
         window.zoomMap = zoomMap;
         window.resetZoom = resetZoom;
         window.toggleHistory = toggleHistory;
@@ -808,7 +838,7 @@
         // Initialize on load
         initMap();
         initList();
-        resetGame();
+        startGame(false);
 
     </script>
 </body>

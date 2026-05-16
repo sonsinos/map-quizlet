@@ -5,105 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>US State Quiz</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom animations and map styles */
-        .state-path {
-            fill: #e5e7eb; /* gray-200 */
-            stroke: #ffffff;
-            stroke-width: 1;
-            stroke-linejoin: round;
-            stroke-linecap: round;
-            transition: fill 0.2s ease, stroke 0.2s ease;
-            cursor: pointer;
-            vector-effect: non-scaling-stroke; /* Keeps borders sharp on resize */
-        }
-        
-        .state-path:hover {
-            fill: #cbd5e1; /* gray-300 */
-            stroke: #94a3b8;
-            z-index: 10;
-        }
-
-        /* The state currently being guessed */
-        .active-state {
-            fill: #3b82f6 !important; /* blue-500 */
-            stroke: #1d4ed8 !important; /* blue-700 */
-            stroke-width: 2;
-            filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
-            z-index: 20; /* Ensure active state is on top */
-        }
-
-        /* Correctly guessed state */
-        .correct-state {
-            fill: #22c55e !important; /* green-500 */
-            stroke: #15803d !important; /* green-700 */
-        }
-
-        /* Incorrectly guessed state */
-        .wrong-state {
-            fill: #ef4444 !important; /* red-500 */
-            stroke: #b91c1c !important; /* red-700 */
-        }
-
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-
-        /* Custom scrollbar for the list */
-        .state-list::-webkit-scrollbar {
-            width: 8px;
-        }
-        .state-list::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .state-list::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .state-list::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Label styles for map */
-        .state-label {
-            fill: white;
-            font-size: 14px;
-            font-weight: bold;
-            text-anchor: middle;
-            dominant-baseline: central;
-            pointer-events: none;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-            animation: fadeIn 0.3s ease-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Zoom Controls */
-        .zoom-btn {
-            @apply bg-white text-slate-700 hover:bg-slate-100 border border-slate-300 rounded shadow-sm w-10 h-10 flex items-center justify-center font-bold text-xl select-none;
-        }
-        .zoom-btn:active {
-            @apply bg-slate-200 transform scale-95;
-        }
-
-        /* History Toggle Chevron */
-        .chevron {
-            transition: transform 0.2s ease;
-        }
-        .expanded .chevron {
-            transform: rotate(180deg);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 h-[100dvh] flex flex-col overflow-hidden select-none">
 
@@ -233,6 +135,7 @@
         let gameActive = false;
         let stateStatuses = {}; // Stores 'correct' or 'wrong' for uncovered states
         let feedbackTimeout;
+        let lastSelectionWasSearchbox = true;
 
         // DOM Elements
         const mapEl = document.getElementById('us-map');
@@ -533,6 +436,7 @@
             scoreWrong = 0;
             gameActive = true;
             stateStatuses = {}; 
+            lastSelectionWasSearchbox = true;
             
             // Reset UI
             updateScoreboard();
@@ -589,7 +493,9 @@
             autoZoomToState(currentTarget);
             
             inputEl.value = '';
-            inputEl.focus();
+            if (lastSelectionWasSearchbox) {
+                inputEl.focus();
+            }
             gameActive = true;
         }
 
@@ -608,6 +514,9 @@
         function checkAnswer(manualGuess = null) {
             // Close autocomplete immediately when checking answer
             closeAutocomplete();
+
+            // Track if guess came from searchbox
+            lastSelectionWasSearchbox = !manualGuess;
 
             if (!currentTarget || !gameActive) return;
 

@@ -59,7 +59,7 @@
             </div>
 
             <!-- States to Learn Section -->
-            <div class="flex-1 flex flex-col min-h-0 h-1/2 md:h-auto p-2 bg-red-50/10">
+            <div class="flex-1 flex flex-col min-h-0 h-1/2 md:h-auto p-2 bg-red-50/40">
                 <div class="pb-2 border-b border-slate-200 font-bold text-xs uppercase text-red-600 tracking-wider text-center shrink-0">
                     States to Learn
                 </div>
@@ -135,7 +135,7 @@
                 <p id="final-score" class="mb-4 text-slate-600"></p>
                 <div class="flex flex-col sm:flex-row gap-2 justify-center items-center">
                     <button onclick="resetGame()" class="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-700 transition-colors font-semibold">Play Again (All States)</button>
-                    <button id="btn-review-game" onclick="startReviewGame()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-50 transition-colors font-semibold hidden">Review Wrong States</button>
+                    <button id="btn-review-game" onclick="startReviewGame()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold hidden">Review Wrong States</button>
                 </div>
             </div>
         </div>
@@ -829,9 +829,10 @@
             }
         });
 
-        // Make functions globally available for HTML onclick handlers
+        // Make functions globally available for HTML onclick handlers and browser console debugging
         window.resetGame = () => startGame(false);
         window.startReviewGame = () => startGame(true);
+        window.endGame = endGame;
         window.zoomMap = zoomMap;
         window.resetZoom = resetZoom;
         window.toggleHistory = toggleHistory;

@@ -297,7 +297,17 @@
             const newScale = currentScale * factor;
             // Clamp scale between 0.5x and 8x
             if (newScale >= 0.5 && newScale <= 8) {
+                const rect = mapContainer.getBoundingClientRect();
+                const pt = mapEl.createSVGPoint();
+                pt.x = rect.left + rect.width / 2;
+                pt.y = rect.top + rect.height / 2;
+                const svgPt = pt.matrixTransform(mapEl.getScreenCTM().inverse());
+                
+                const tx = svgPt.x - factor * (svgPt.x - currentTranslate.x);
+                const ty = svgPt.y - factor * (svgPt.y - currentTranslate.y);
+                
                 currentScale = newScale;
+                currentTranslate = { x: tx, y: ty };
                 updateTransform();
             }
         }
@@ -328,12 +338,17 @@
             if (bbox.width > 200 || bbox.height > 200) targetScale = 1.5; // Large states
             else if (bbox.width < 60 || bbox.height < 60) targetScale = 4.0; // Small states
             
-            // Calculate Translation to Center the state in SVG Coordinates
-            // The SVG viewBox is 960x600. Center is (480, 300).
-            // We want (cx, cy) * scale + translate = (480, 300)
+            // Calculate Translation to Center the state in screen container coordinates
+            const rect = mapContainer.getBoundingClientRect();
+            const pt = mapEl.createSVGPoint();
+            pt.x = rect.left + rect.width / 2;
+            pt.y = rect.top + rect.height / 2;
             
-            const tx = 480 - (cx * targetScale);
-            const ty = 300 - (cy * targetScale);
+            // Convert screen center point to root SVG coordinate space
+            const svgPt = pt.matrixTransform(mapEl.getScreenCTM().inverse());
+            
+            const tx = svgPt.x - (cx * targetScale);
+            const ty = svgPt.y - (cy * targetScale);
             
             currentScale = targetScale;
             currentTranslate = { x: tx, y: ty };
@@ -599,10 +614,10 @@
             // Use manual click or input value
             const userGuess = manualGuess ? manualGuess.toLowerCase() : inputEl.value.trim().toLowerCase();
             
-            // Validate: Ensure the guess is a valid state name from our list
-            const isValidState = statesData.some(state => state.name.toLowerCase() === userGuess);
+            // Validate: Ensure the guess is a valid state name or ID from our list
+            const matchedState = statesData.find(state => state.name.toLowerCase() === userGuess || state.id.toLowerCase() === userGuess);
             
-            if (!isValidState) {
+            if (!matchedState) {
                 // Shake input to indicate invalid/incomplete name
                 inputEl.classList.add('shake');
                 setTimeout(() => inputEl.classList.remove('shake'), 500);
@@ -619,7 +634,7 @@
             feedbackContainer.classList.add('hidden');
             if (feedbackTimeout) clearTimeout(feedbackTimeout);
 
-            if (userGuess === correctName) {
+            if (matchedState.name.toLowerCase() === correctName) {
                 // Correct
                 scoreCorrect++;
                 stateStatuses[correctName] = 'correct'; 
@@ -721,8 +736,12 @@
                 if (isListVisible && firstItem && !firstItem.hasAttribute('data-disabled')) {
                     e.preventDefault();
                     const suggestion = firstItem.dataset.value;
+                    const suggestionId = firstItem.dataset.id;
                     
-                    if (inputEl.value.trim().toLowerCase() === suggestion.toLowerCase()) {
+                    if (inputEl.value.trim().toLowerCase() === suggestion.toLowerCase() ||
+                        inputEl.value.trim().toLowerCase() === suggestionId.toLowerCase()) {
+                        inputEl.value = suggestion;
+                        closeAutocomplete();
                         checkAnswer();
                     } else {
                         inputEl.value = suggestion;
@@ -740,51 +759,51 @@
             closeAutocomplete();
             if (!val) return;
 
-            const matches = statesData.filter(state => state.name.toLowerCase().startsWith(val.toLowerCase()));
+            // Exclude states that are already uncovered (correct or wrong)
+            const matches = statesData.filter(state => 
+                (state.name.toLowerCase().startsWith(val.toLowerCase()) ||
+                state.id.toLowerCase().startsWith(val.toLowerCase())) &&
+                !stateStatuses[state.name.toLowerCase()]
+            );
             
-            matches.sort((a, b) => {
-                const aStatus = stateStatuses[a.name.toLowerCase()];
-                const bStatus = stateStatuses[b.name.toLowerCase()];
-                
-                if (!aStatus && bStatus) return -1;
-                if (aStatus && !bStatus) return 1;
-                return a.name.localeCompare(b.name);
-            });
+            // Sort remaining matches alphabetically
+            matches.sort((a, b) => a.name.localeCompare(b.name));
 
             if (matches.length > 0) {
                 autocompleteList.classList.remove('hidden');
                 matches.forEach(state => {
                     const div = document.createElement('div');
-                    const status = stateStatuses[state.name.toLowerCase()];
                     
                     // Base styling
-                    let classes = "px-4 py-2 border-b border-slate-50 last:border-0 flex justify-between items-center";
+                    let classes = "px-4 py-2 border-b border-slate-50 last:border-0 flex justify-between items-center hover:bg-slate-100 cursor-pointer text-slate-700";
                     
-                    const nameHtml = `<strong>${state.name.substr(0, val.length)}</strong>${state.name.substr(val.length)}`;
-
-                    if (status) {
-                        classes += " cursor-not-allowed opacity-75";
-                        if (status === 'correct') {
-                            classes += " bg-green-50 text-green-700";
-                            div.innerHTML = `<span>${nameHtml}</span> <span class="text-xs font-bold uppercase ml-2">Correct</span>`;
-                        } else {
-                            classes += " bg-red-50 text-red-700";
-                            div.innerHTML = `<span>${nameHtml}</span> <span class="text-xs font-bold uppercase ml-2">Wrong</span>`;
-                        }
-                        div.setAttribute('data-disabled', 'true');
+                    let nameHtml;
+                    if (state.name.toLowerCase().startsWith(val.toLowerCase())) {
+                        nameHtml = `<strong>${state.name.substr(0, val.length)}</strong>${state.name.substr(val.length)}`;
                     } else {
-                        classes += " hover:bg-slate-100 cursor-pointer text-slate-700";
-                        div.innerHTML = `<span>${nameHtml}</span>`;
-                        
-                        div.addEventListener('click', function() {
-                            inputEl.value = state.name;
-                            closeAutocomplete();
-                            inputEl.focus();
-                        });
+                        nameHtml = state.name;
                     }
+
+                    let idBadgeHtml;
+                    if (state.id.toLowerCase().startsWith(val.toLowerCase())) {
+                        idBadgeHtml = `<strong>${state.id.substr(0, val.length)}</strong>${state.id.substr(val.length)}`;
+                    } else {
+                        idBadgeHtml = state.id;
+                    }
+
+                    div.innerHTML = `
+                        <span>${nameHtml}</span>
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 rounded border border-slate-200 uppercase tracking-wider">${idBadgeHtml}</span>`;
+                    
+                    div.addEventListener('click', function() {
+                        inputEl.value = state.name;
+                        closeAutocomplete();
+                        inputEl.focus();
+                    });
                     
                     div.className = classes;
                     div.dataset.value = state.name;
+                    div.dataset.id = state.id;
                     autocompleteList.appendChild(div);
                 });
             }

@@ -695,6 +695,7 @@
         }
 
         function endGame() {
+            updateScoreboard();
             inputArea.classList.add('hidden');
             gameOverArea.classList.remove('hidden');
             finalScoreEl.textContent = `You got ${scoreCorrect} correct and ${scoreWrong} wrong.`;

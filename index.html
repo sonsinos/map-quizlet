@@ -60,12 +60,24 @@
     <main class="flex-grow flex flex-col lg:flex-row gap-2 lg:gap-4 p-2 lg:p-4 w-full max-w-7xl mx-auto overflow-hidden relative z-0">
         
         <!-- Sidebar List (Left on Desktop, Bottom on Mobile) - ONLY REMAINING STATES -->
-        <aside class="order-2 lg:order-1 w-full lg:w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-48 lg:h-full shrink-0 overflow-hidden">
-            <div class="p-2 bg-slate-50 border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
-                Select State
+        <aside class="order-2 lg:order-1 w-full lg:w-64 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-64 lg:h-full shrink-0 overflow-hidden">
+            <!-- Available States Section -->
+            <div class="flex flex-col flex-grow min-h-0 border-b border-slate-200">
+                <div class="p-2 bg-slate-50 border-b font-bold text-xs uppercase text-slate-500 tracking-wider text-center shrink-0">
+                    Select State
+                </div>
+                <div id="list-remaining" class="state-list overflow-y-auto flex-1 p-1 space-y-1 min-h-0">
+                    <!-- Remaining items -->
+                </div>
             </div>
-            <div id="list-remaining" class="state-list overflow-y-auto flex-1 p-1 space-y-1 min-h-0">
-                <!-- Remaining items -->
+            <!-- States to Learn Section -->
+            <div class="flex flex-col h-28 lg:h-48 shrink-0 min-h-0">
+                <div class="p-2 bg-red-50 border-b border-red-100 font-bold text-xs uppercase text-red-600 tracking-wider text-center shrink-0">
+                    States to Learn
+                </div>
+                <div id="list-incorrect" class="state-list overflow-y-auto flex-grow p-1 space-y-1 min-h-0">
+                    <div class="text-center text-slate-400 italic text-xs py-2" id="incorrect-placeholder">No states to review yet</div>
+                </div>
             </div>
         </aside>
 
@@ -136,6 +148,7 @@
         let stateStatuses = {}; // Stores 'correct' or 'wrong' for uncovered states
         let feedbackTimeout;
         let lastSelectionWasSearchbox = true;
+        let incorrectStates = new Set();
 
         // DOM Elements
         const mapEl = document.getElementById('us-map');
@@ -438,6 +451,13 @@
             stateStatuses = {}; 
             lastSelectionWasSearchbox = true;
             
+            // Re-init incorrect states
+            incorrectStates.clear();
+            const learnContainer = document.getElementById('list-incorrect');
+            if (learnContainer) {
+                learnContainer.innerHTML = '<div class="text-center text-slate-400 italic text-xs py-2" id="incorrect-placeholder">No states to review yet</div>';
+            }
+            
             // Reset UI
             updateScoreboard();
             inputArea.classList.remove('hidden');
@@ -571,6 +591,12 @@
                 // Move state to Completed list
                 moveStateToCompleted(currentTarget, false);
 
+                // Add target state and matched incorrect guess state to Learn list
+                addStateToLearn(currentTarget);
+                if (matchedState) {
+                    addStateToLearn(matchedState);
+                }
+
                 // Shake effect on input (visual feedback)
                 if (!manualGuess) {
                     inputEl.classList.add('shake');
@@ -579,6 +605,33 @@
 
                 showFeedback(false, currentTarget.name);
                 setTimeout(nextRound, 2500); 
+            }
+        }
+
+        function addStateToLearn(state) {
+            if (incorrectStates.has(state.id)) return;
+            incorrectStates.add(state.id);
+
+            // Hide placeholder
+            const placeholder = document.getElementById('incorrect-placeholder');
+            if (placeholder) placeholder.classList.add('hidden');
+
+            const item = document.createElement('div');
+            item.id = `learn-${state.id}`;
+            item.className = "w-full text-left px-3 py-1.5 hover:bg-red-50/30 transition-colors flex justify-between items-center border-b border-slate-50 last:border-0 text-slate-700 font-medium text-xs";
+            item.innerHTML = `
+                <span>${state.name}</span>
+                <span class="px-1 py-0.2 text-[9px] font-bold bg-slate-100 text-slate-500 rounded border border-slate-200 uppercase tracking-wider">${state.id}</span>`;
+
+            // Insert alphabetically into list-incorrect
+            const container = document.getElementById('list-incorrect');
+            const existingItems = Array.from(container.children).filter(el => el.id !== 'incorrect-placeholder');
+            const nextItem = existingItems.find(el => el.querySelector('span').textContent.localeCompare(state.name) > 0);
+
+            if (nextItem) {
+                container.insertBefore(item, nextItem);
+            } else {
+                container.appendChild(item);
             }
         }
 

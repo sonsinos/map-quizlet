@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Dynamic load of Quiz configuration depending on URL query strings
     const urlParams = new URLSearchParams(window.location.search);
     const quizName = urlParams.get('quiz') || 'us';
-    const modulePath = `../${quizName}_data.js`;
+    const modulePath = `../data/map_${quizName}.js`;
 
     let quizConfig;
     try {
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.error("Failed to dynamically load quiz configuration, showing error fallback.", e);
         alert(`Failed to load quiz "${quizName}". Falling back to default quiz.`);
-        const module = await import("../us_data.js");
+        const module = await import("../data/map_us.js");
         quizConfig = module.quizConfig;
     }
 

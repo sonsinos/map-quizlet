@@ -1,5 +1,5 @@
 /* Custom animations and map styles */
-.state-path {
+.region-path {
     fill: #e5e7eb; /* gray-200 */
     stroke: #ffffff;
     stroke-width: 1;
@@ -10,29 +10,29 @@
     vector-effect: non-scaling-stroke; /* Keeps borders sharp on resize */
 }
 
-.state-path:hover {
+.region-path:hover {
     fill: #cbd5e1; /* gray-300 */
     stroke: #94a3b8;
     z-index: 10;
 }
 
-/* The state currently being guessed */
-.active-state {
+/* The region currently being guessed */
+.active-region {
     fill: #3b82f6 !important; /* blue-500 */
     stroke: #1d4ed8 !important; /* blue-700 */
     stroke-width: 2;
     filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
-    z-index: 20; /* Ensure active state is on top */
+    z-index: 20; /* Ensure active region is on top */
 }
 
-/* Correctly guessed state */
-.correct-state {
+/* Correctly guessed region */
+.correct-region {
     fill: #22c55e !important; /* green-500 */
     stroke: #15803d !important; /* green-700 */
 }
 
-/* Incorrectly guessed state */
-.wrong-state {
+/* Incorrectly guessed region */
+.wrong-region {
     fill: #ef4444 !important; /* red-500 */
     stroke: #b91c1c !important; /* red-700 */
 }
@@ -49,22 +49,22 @@
 }
 
 /* Custom scrollbar for the list */
-.state-list::-webkit-scrollbar {
+.region-list::-webkit-scrollbar {
     width: 8px;
 }
-.state-list::-webkit-scrollbar-track {
+.region-list::-webkit-scrollbar-track {
     background: #f1f5f9;
 }
-.state-list::-webkit-scrollbar-thumb {
+.region-list::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
 }
-.state-list::-webkit-scrollbar-thumb:hover {
+.region-list::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
 
 /* Label styles for map */
-.state-label {
+.region-label {
     fill: white;
     font-size: 14px;
     font-weight: bold;

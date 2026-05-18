@@ -58,6 +58,7 @@ export class Game {
         const randomIndex = Math.floor(Math.random() * this.remainingItems.length);
         this.currentTarget = this.remainingItems[randomIndex];
         this.remainingItems.splice(randomIndex, 1);
+        this.gameActive = true;
         return this.currentTarget;
     }
 

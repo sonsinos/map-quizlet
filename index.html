@@ -145,7 +145,7 @@
     <script type="module">
         // Dynamic Load of Quiz Configuration
         const urlParams = new URLSearchParams(window.location.search);
-        const quizName = urlParams.get('quiz') || 'states';
+        const quizName = urlParams.get('quiz') || 'us';
         const modulePath = `./${quizName}_data.js`;
 
         let quizConfig;
@@ -155,7 +155,7 @@
         } catch (e) {
             console.error("Failed to dynamically load quiz configuration, showing error fallback.", e);
             alert(`Failed to load quiz "${quizName}". Falling back to default quiz.`);
-            const module = await import("./states_data.js");
+            const module = await import("./us_data.js");
             quizConfig = module.quizConfig;
         }
 

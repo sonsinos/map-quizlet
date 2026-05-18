@@ -1,5 +1,5 @@
 export const quizConfig = {
-    title: "US States Quiz",
+    title: "USA",
     flag: "🇺🇸",
     favicon: "data/favicon_us.png",
     map: {

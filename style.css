@@ -114,3 +114,12 @@
 .expanded .chevron {
     transform: rotate(180deg);
 }
+
+/* Quiz Select Chevron */
+.quiz-chevron {
+    transition: transform 0.2s ease;
+}
+.expanded .quiz-chevron {
+    transform: rotate(180deg);
+}
+

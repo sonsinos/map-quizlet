@@ -49,7 +49,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnPlayAgain: document.getElementById('btn-play-again'),
         btnReviewGame: document.getElementById('btn-review-game'),
         headerTitle: document.getElementById('header-title'),
-        favicon: document.getElementById('favicon')
+        favicon: document.getElementById('favicon'),
+        quizSelectToggle: document.getElementById('quiz-select-toggle'),
+        quizSelectPanel: document.getElementById('quiz-select-panel'),
+        checkUs: document.getElementById('check-us'),
+        checkEurope: document.getElementById('check-europe')
     };
 
     // Instantiate specialized managers
@@ -97,6 +101,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (elements.favicon) {
             elements.favicon.setAttribute('href', quizConfig.favicon || 'favicon.png');
+        }
+
+        if (quizName === 'europe') {
+            elements.checkEurope.classList.remove('hidden');
+            elements.checkUs.classList.add('hidden');
+        } else {
+            elements.checkUs.classList.remove('hidden');
+            elements.checkEurope.classList.add('hidden');
         }
     }
 
@@ -339,6 +351,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     elements.scoreToggle.addEventListener('click', () => {
         elements.historyPanel.classList.toggle('hidden');
         elements.scoreToggle.classList.toggle('expanded');
+        
+        // Close quiz select panel if open
+        if (!elements.quizSelectPanel.classList.contains('hidden')) {
+            elements.quizSelectPanel.classList.add('hidden');
+            elements.quizSelectToggle.classList.remove('expanded');
+        }
+    });
+
+    // Quiz selection dropdown toggle logic
+    elements.quizSelectToggle.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent immediately triggering the document click listener
+        elements.quizSelectPanel.classList.toggle('hidden');
+        elements.quizSelectToggle.classList.toggle('expanded');
+        
+        // Close history panel if open
+        if (!elements.historyPanel.classList.contains('hidden')) {
+            elements.historyPanel.classList.add('hidden');
+            elements.scoreToggle.classList.remove('expanded');
+        }
+    });
+
+    // Close dropdown if clicked anywhere else
+    document.addEventListener('click', (e) => {
+        if (!elements.quizSelectPanel.classList.contains('hidden')) {
+            if (!elements.quizSelectToggle.contains(e.target) && !elements.quizSelectPanel.contains(e.target)) {
+                elements.quizSelectPanel.classList.add('hidden');
+                elements.quizSelectToggle.classList.remove('expanded');
+            }
+        }
     });
 
     document.getElementById('header-restart-btn').addEventListener('click', () => startGame(false));

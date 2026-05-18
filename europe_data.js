@@ -1,6 +1,7 @@
 export const quizConfig = {
     title: "Europe Countries Quiz",
     flag: "🇪🇺",
+    favicon: "favicon_europe.png",
     map: {
         viewBox: "0 0 600 600",
         labelField: "id",

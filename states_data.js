@@ -1,6 +1,7 @@
 export const quizConfig = {
     title: "US States Quiz",
     flag: "🇺🇸",
+    favicon: "favicon.png",
     map: {
         viewBox: "0 0 960 600",
         labelField: "id",
